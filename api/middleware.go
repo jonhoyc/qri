@@ -45,6 +45,7 @@ func (s *Server) readOnlyCheck(r *http.Request) bool {
 // addCORSHeaders adds CORS header info for whitelisted servers
 func (s *Server) addCORSHeaders(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
+	log.Infof("CORS origin: %q", origin)
 	for _, o := range s.Config().API.AllowedOrigins {
 		if origin == o {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
