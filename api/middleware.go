@@ -47,9 +47,7 @@ func (s *Server) addCORSHeaders(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	log.Infof("CORS origin: %q", origin)
 	for _, o := range s.Config().API.AllowedOrigins {
-		log.Infof("CORS origin match?: %q", o)
 		if origin == o {
-			log.Infof("CORS origin set")
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")

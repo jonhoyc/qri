@@ -16,6 +16,74 @@ import (
 
 const qriWebsocketProtocol = "qri-websocket"
 
+// Collect all websocket connections
+var wsConnections = []*websocket.Conn{}
+
+func WSConnectionHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+			Subprotocols:       []string{qriWebsocketProtocol},
+			InsecureSkipVerify: true,
+		})
+		if err != nil {
+			log.Debugf("Websocket accept error: %s", err)
+			return
+		}
+		wsConnections = append(wsConnections, c)
+	}
+}
+
+func NewWebsocketRoutes(inst *Instance, m *http.ServeMux) {
+	
+	m.Handle("/ws", WSConnectionHandler())
+
+	handler := func(_ context.Context, t event.Type, payload interface{}) error {
+		ctx := context.Background()
+		evt := map[string]interface{}{
+			"type": string(t),
+			"data": payload,
+		}
+
+		log.Debugf("sending event %q to %d websocket conns", t, len(wsConnections))
+		for k, c := range wsConnections {
+			go func(k int, c *websocket.Conn) {
+				err := wsjson.Write(ctx, c, evt)
+				if err != nil {
+					log.Errorf("connection %d: wsjson write error: %s", k, err)
+				}
+			}(k, c)
+		}
+		return nil
+	}
+
+	inst.bus.Subscribe(handler,
+		event.ETFSICreateLinkEvent,
+		event.ETCreatedNewFile,
+		event.ETModifiedFile,
+		event.ETDeletedFile,
+		event.ETRenamedFolder,
+		event.ETRemovedFolder,
+
+		event.ETRemoteClientPushVersionProgress,
+		event.ETRemoteClientPushVersionCompleted,
+		event.ETRemoteClientPushDatasetCompleted,
+		event.ETRemoteClientPullVersionProgress,
+		event.ETRemoteClientPullVersionCompleted,
+		event.ETRemoteClientPullDatasetCompleted,
+		event.ETRemoteClientRemoveDatasetCompleted,
+
+		event.ETDatasetSaveStarted,
+		event.ETDatasetSaveProgress,
+		event.ETDatasetSaveCompleted,
+
+		event.ETCronJobScheduled,
+		event.ETCronJobUnscheduled,
+		event.ETCronJobStarted,
+		event.ETCronJobCompleted,
+	)
+}
+
+
 // ServeWebsocket creates a websocket that clients can connect to in order to
 // get realtime events
 func (inst *Instance) ServeWebsocket(ctx context.Context) {

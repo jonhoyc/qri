@@ -214,5 +214,7 @@ func NewServerRoutes(s Server) *http.ServeMux {
 		m.Handle("/webui", s.Middleware(WebuiHandler))
 	}
 
+	lib.NewWebsocketRoutes(s.Instance, m)
+
 	return m
 }
