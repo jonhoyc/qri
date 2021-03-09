@@ -42,15 +42,16 @@ func TestFSIHandlers(t *testing.T) {
 	}
 	defer os.RemoveAll(filepath.Join("fsi_tests"))
 
-	initHandler := func(w http.ResponseWriter, r *http.Request) {
-		muxVarsToQueryParamMiddleware(lib.NewHTTPRequestHandler(inst, "fsi.init")).ServeHTTP(w, r)
-	}
 	initCases := []handlerTestCase{
+		{"GET", "/", nil, nil},
 		{"POST", "/", nil, nil},
-		{"POST", fmt.Sprintf("/me/api_test_init_dataset?targetdir=%s&format=csv", initDir), nil, map[string]string{"peername": "me", "name": "api_test_init_dataset"}},
-		{"POST", fmt.Sprintf("/me/api_test_init_dataset?targetdir=%s&format=csv", initDir), nil, map[string]string{"peername": "me", "name": "api_test_init_dataset"}},
+		{"POST", fmt.Sprintf("/?filepath=%s", initDir), nil, nil},
+		{"POST", fmt.Sprintf("/?filepath=%s&name=api_test_init_dataset", initDir), nil, nil},
+		// TODO(dlong): Disabled, contains local file paths.
+		//{"POST", fmt.Sprintf("/?filepath=%s&name=api_test_init_dataset&format=csv", initDir), nil},
+		//{"DELETE", "/", nil},
 	}
-	runHandlerTestCases(t, "init", initHandler, initCases, true)
+	runHandlerTestCases(t, "init", h.InitHandler(""), initCases, true)
 
 	whatChangedHandler := func(w http.ResponseWriter, r *http.Request) {
 		lib.NewHTTPRequestHandler(inst, "fsi.whatchanged").ServeHTTP(w, r)
