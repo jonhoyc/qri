@@ -132,6 +132,7 @@ func inlineScriptsToBytes(ds *dataset.Dataset) error {
 // body pagination, as well as normal head responses. Input logic has already been handled
 // before this function, so errors should not commonly happen.
 func (h *DatasetHandlers) replyWithGetResponse(w http.ResponseWriter, r *http.Request, params *lib.GetParams, result *lib.GetResult) {
+	log.Debugf("replyWithGetResponse: %+v\n\n%+v", params, result)
 	resultFormat := params.Format
 	if resultFormat == "" {
 		resultFormat = result.Dataset.Structure.Format
@@ -167,6 +168,8 @@ func (h *DatasetHandlers) replyWithGetResponse(w http.ResponseWriter, r *http.Re
 			Published: result.Published,
 			Dataset:   result.Dataset,
 		}
+
+		log.Debugf("replyWithGetResponse resp: %+v\n\n%s", datasetRef, string(result.Bytes))
 
 		util.WriteResponse(w, datasetRef)
 	} else {

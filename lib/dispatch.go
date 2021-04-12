@@ -126,10 +126,21 @@ func (inst *Instance) dispatchMethodCall(ctx context.Context, method string, par
 			// for it to reliably use GET. All POSTs w/ content type application json work, however.
 			// we may want to just flat out say that as an RPC layer, dispatch will only ever use
 			// json POST to communicate.
+			zz, ok := res.(**GetResult)
+			if !ok {
+				log.Debugf("dispatch: pre !OK")	
+			}
+			log.Debugf("dispatch: pre - %+v", zz)
 			err = inst.http.CallMethod(ctx, c.Endpoint, "POST", param, res)
 			if err != nil {
+				log.Errorf("dispatch: %s", err.Error())
 				return nil, nil, err
 			}
+			zz, ok = res.(**GetResult)
+			if !ok {
+				log.Debugf("dispatch: post !OK")	
+			}
+			log.Debugf("dispatch: post - %+v", zz)
 			cur = nil
 			var inf interface{}
 			if res != nil {
@@ -137,6 +148,7 @@ func (inst *Instance) dispatchMethodCall(ctx context.Context, method string, par
 				out = out.Elem()
 				inf = out.Interface()
 			}
+			log.Debugf("dispatch: %+v\n\n%+v\n\n", inf, cur)
 			return inf, cur, nil
 		}
 		return nil, nil, fmt.Errorf("method %q not found", method)

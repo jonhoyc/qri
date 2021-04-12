@@ -22,6 +22,7 @@ import (
 var ErrUnsupportedRPC = errors.New("method is not suported over RPC")
 
 const jsonMimeType = "application/json"
+const DEBUG = true
 
 // decoder maps HTTP requests to input structs
 var decoder = schema.NewDecoder()
@@ -113,6 +114,8 @@ func (c HTTPClient) do(ctx context.Context, addr string, httpMethod string, mime
 	var err error
 
 	log.Debugf("http: %s - %s", httpMethod, addr)
+	log.Debugf("http: raw - %s", raw)
+	log.Debugf("http: params - %+v", params)
 
 	if httpMethod == http.MethodGet || httpMethod == http.MethodDelete {
 		u, err := url.Parse(addr)
@@ -159,6 +162,8 @@ func (c HTTPClient) do(ctx context.Context, addr string, httpMethod string, mime
 		return err
 	}
 
+	log.Debugf("http: body - %s", string(body))
+
 	if err = c.checkError(res, body, raw); err != nil {
 		return err
 	}
@@ -177,11 +182,13 @@ func (c HTTPClient) do(ctx context.Context, addr string, httpMethod string, mime
 			Data: result,
 			Meta: &apiutil.Meta{},
 		}
+		log.Debugf("http: unmarshal 1")
 		err = json.Unmarshal(body, &resData)
 		if err != nil {
 			log.Debugf("HTTPClient response err: %s", err.Error())
 			return fmt.Errorf("HTTPClient response err: %s", err)
 		}
+		log.Debugf("http: unmarshal 2")
 	}
 	return nil
 }
